@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5f0">
+  <title>Mon Portrait — Valeurs & figures</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #23312d;
+      --muted: #68756e;
+      --paper: #fbfaf7;
+      --surface: #fff;
+      --line: #e5e5dd;
+      --green: #315f50;
+      --green-dark: #244b3e;
+      --mint: #e6f0e9;
+      --rose: #9b5148;
+      --shadow: 0 14px 42px rgba(38, 53, 45, .08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled, input:disabled, textarea:disabled, select:disabled { cursor: not-allowed; opacity: .58; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+      padding: 18px clamp(20px, 5vw, 76px); background: var(--surface); border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 13px; min-width: 0; }
+    .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; color: white; background: var(--green); font-family: Georgia, serif; font-size: 22px; }
+    .brand-title { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+    .brand-subtitle { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .file-actions { display: flex; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
+    .button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 39px;
+      padding: 9px 14px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--ink);
+      font-size: 13px; font-weight: 650; transition: .15s ease;
+    }
+    .button:hover:not(:disabled) { border-color: #aabbb0; transform: translateY(-1px); }
+    .button.primary { color: white; border-color: var(--green); background: var(--green); }
+    .button.primary:hover:not(:disabled) { background: var(--green-dark); }
+    .button.subtle { background: transparent; }
+    .button.danger { color: var(--rose); }
+    .button.small { min-height: 34px; padding: 7px 11px; font-size: 12px; }
+    .tabs { display: flex; gap: 6px; padding: 14px clamp(20px, 5vw, 76px) 0; background: var(--surface); }
+    .tab {
+      position: relative; padding: 11px 15px 13px; border: 0; border-radius: 9px 9px 0 0;
+      color: var(--muted); background: transparent; font-weight: 650; font-size: 13px;
+    }
+    .tab.active { color: var(--green-dark); background: var(--paper); }
+    .tab.active::after { position: absolute; right: 12px; bottom: 0; left: 12px; height: 2px; background: var(--green); content: ""; }
+    main { max-width: 1500px; min-height: calc(100vh - 128px); margin: 0 auto; padding: 38px clamp(20px, 5vw, 76px) 70px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+    .eyebrow { margin: 0 0 8px; color: var(--green); font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 8px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(30px, 4vw, 43px); font-weight: 500; letter-spacing: -.035em; }
+    .lead { max-width: 680px; margin-bottom: 0; color: var(--muted); line-height: 1.6; }
+    .count-note { color: var(--muted); font-size: 13px; }
+    .values-grid { display: grid; grid-template-columns: repeat(5, minmax(130px, 1fr)); gap: 12px; }
+    .value-card {
+      position: relative; min-height: 88px; padding: 18px 17px; border: 1px solid var(--line); border-radius: 18px;
+      color: var(--ink); background: var(--surface); text-align: left; box-shadow: 0 2px 8px rgba(38,53,45,.025);
+      transition: border-color .15s, background .15s, transform .15s, box-shadow .15s;
+    }
+    .value-card:hover { border-color: #adc2b4; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(38,53,45,.07); }
+    .value-card.selected { border-color: var(--green); background: var(--mint); box-shadow: inset 0 0 0 1px var(--green); }
+    .value-card .name { display: block; padding-right: 24px; font-family: Georgia, "Times New Roman", serif; font-size: 16px; line-height: 1.35; }
+    .order-badge { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: white; background: var(--green); font-size: 12px; font-weight: 750; }
+    .empty-state { padding: 48px 24px; border: 1px dashed #cbd2ca; border-radius: 18px; color: var(--muted); background: rgba(255,255,255,.55); text-align: center; line-height: 1.6; }
+    .selected-values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .value-card.chosen-value { display: flex; flex-direction: column; gap: 10px; padding: 22px; cursor: pointer; }
+    .value-card.chosen-value .name { font-size: 21px; }
+    .value-card.chosen-value .result-description { font-size: 13px; }
+    #valueCards .field-hint { margin: 10px 0 0; }
+    .results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+    .result-card { padding: 22px; border: 1px solid var(--line); border-radius: 17px; background: var(--surface); box-shadow: 0 5px 20px rgba(38,53,45,.035); }
+    .result-card.portrait-card { margin-top: 28px; background: #f0f4ee; }
+    .result-kicker { margin: 0 0 8px; color: var(--green); font-size: 10px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+    .result-card h2 { margin-bottom: 10px; font-family: Georgia, "Times New Roman", serif; font-size: 21px; font-weight: 550; }
+    .result-card p:last-child { margin-bottom: 0; }
+    .result-description { color: #53615a; line-height: 1.7; white-space: pre-wrap; }
+    .reference { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+    .admin-layout { display: grid; grid-template-columns: minmax(270px, .82fr) minmax(0, 1.65fr); gap: 20px; align-items: start; }
+    .admin-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 18px; }
+    .admin-tab { padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: white; font-size: 12px; font-weight: 650; }
+    .admin-tab.active { color: var(--green-dark); border-color: #a9c0b0; background: var(--mint); }
+    .panel { overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 16px; border-bottom: 1px solid var(--line); }
+    .panel-head h2 { margin: 0; font-size: 13px; font-weight: 750; }
+    .head-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+    .search-wrap { position: relative; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    .search-wrap::before { position: absolute; top: 21px; left: 26px; color: #89948d; content: "⌕"; font-size: 19px; line-height: 1; }
+    .search { width: 100%; height: 37px; padding: 0 12px 0 34px; border: 1px solid var(--line); border-radius: 9px; outline: none; background: #fcfcfa; font-size: 12px; }
+    .search:focus, input:focus, textarea:focus, select:focus { border-color: #82a894; outline: 3px solid rgba(91,139,112,.13); }
+    .figure-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 11px; }
+    .search.hidden + .figure-filters { padding-top: 0; }
+    .filter-field { display: flex; align-items: center; gap: 8px; color: #46554c; font-size: 11px; font-weight: 720; }
+    .filter-field select { min-height: 34px; max-width: 220px; padding: 6px 28px 6px 9px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; font-size: 11px; }
+    .table-scroll { max-height: min(62vh, 690px); overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { position: sticky; top: 0; z-index: 1; padding: 10px 13px; color: var(--muted); background: #f8f8f5; text-align: left; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+    td { padding: 11px 13px; border-top: 1px solid #efefe9; vertical-align: top; }
+    tbody tr { cursor: pointer; transition: background .12s; }
+    tbody tr:hover { background: #f8faf7; }
+    tbody tr.active-row { background: var(--mint); }
+    .cell-title { display: block; margin-bottom: 3px; font-weight: 680; }
+    .cell-sub { display: -webkit-box; overflow: hidden; color: var(--muted); line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .verified-col { width: 36px; padding-right: 0; text-align: center; }
+    .table-empty { padding: 30px 14px; color: var(--muted); text-align: center; line-height: 1.5; }
+    .editor { padding: 20px; }
+    .editor-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 17px; border-bottom: 1px solid var(--line); }
+    .editor-title h2 { margin: 0 0 4px; font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-weight: 550; }
+    .editor-title p { margin: 0; color: var(--muted); font-size: 12px; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 18px; }
+    .field { min-width: 0; }
+    .field.full { grid-column: 1 / -1; }
+    .field label, .field-label { display: block; margin-bottom: 6px; color: #46554c; font-size: 11px; font-weight: 720; }
+    .field input:not([type="checkbox"]), .field textarea, .field select {
+      width: 100%; min-height: 39px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; font-size: 12px; line-height: 1.45;
+    }
+    .field textarea { min-height: 88px; resize: vertical; }
+    .field textarea.long { min-height: 108px; }
+    .field select[multiple] { min-height: 128px; }
+    .field-hint { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .editor-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--line); }
+    .editor-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+    .check-label { display: inline-flex; align-items: center; gap: 7px; color: #46554c; font-size: 12px; font-weight: 650; }
+    .check-label input { accent-color: var(--green); }
+    .report { margin-top: 15px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 11px; background: #fff; font-size: 12px; line-height: 1.55; }
+    .report.success { border-color: #b8d5c0; color: #315f50; background: #eff7f0; }
+    .report.warning { border-color: #ead5af; color: #704f1d; background: #fff8e9; }
+    .report ul { margin: 7px 0 0; padding-left: 18px; }
+    .report li + li { margin-top: 4px; }
+    .notice { position: fixed; right: 22px; bottom: 22px; z-index: 10; max-width: min(440px, calc(100vw - 44px)); padding: 13px 17px; border-radius: 11px; color: white; background: #293c33; box-shadow: var(--shadow); font-size: 13px; line-height: 1.45; }
+    .notice.error { background: #8c4038; }
+    .hidden { display: none !important; }
+    #fileInput { display: none; }
+    @media (max-width: 1000px) {
+      .values-grid { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
+      .admin-layout { grid-template-columns: minmax(240px, .9fr) minmax(0, 1.3fr); }
+    }
+    @media (max-width: 760px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .file-actions { justify-content: flex-start; }
+      main { padding-top: 27px; }
+      .values-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .results, .selected-values { grid-template-columns: 1fr; }
+      .admin-layout { grid-template-columns: 1fr; }
+      .table-scroll { max-height: 38vh; }
+    }
+    @media (max-width: 420px) {
+      .button { padding-right: 10px; padding-left: 10px; }
+      .values-grid { gap: 8px; }
+      .value-card { min-height: 76px; padding: 15px 12px; }
+      .value-card .name { font-size: 14px; }
+      .fields { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .editor { padding: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">P</div>
+      <div>
+        <p class="brand-title">Mon Portrait</p>
+        <p class="brand-subtitle">Explorer les valeurs qui vous ressemblent</p>
+      </div>
+    </div>
+    <div class="file-actions">
+      <button class="button" id="loadButton" type="button">Charger données</button>
+      <input id="fileInput" type="file" accept=".yaml,.yml,text/yaml,text/plain">
+      <button class="button primary" id="exportButton" type="button">Exporter données</button>
+    </div>
+  </header>
+  <nav class="tabs" aria-label="Sections principales">
+    <button class="tab active" type="button" data-page="portrait">Mon Portrait</button>
+    <button class="tab" type="button" data-page="admin">Administration</button>
+  </nav>
+  <main>
+    <section id="portraitPage">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">Mieux se connaître</p>
+          <h1>Quelles valeurs vous guident&nbsp;?</h1>
+          <p class="lead">Choisissez trois valeurs, dans l’ordre qui compte pour vous. Votre portrait et des figures inspirantes apparaîtront ensuite.</p>
+        </div>
+        <div class="count-note" id="selectionCount">0 sur 3 valeurs choisies</div>
+      </div>
+      <div id="valueCards"></div>
+      <div id="portraitResults"></div>
+    </section>
+    <section id="adminPage" class="hidden">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">Gestion du modèle</p>
+          <h1>Administration</h1>
+          <p class="lead">Ajoutez, recherchez et mettez à jour les données qui alimentent le portrait. Les données restent dans votre navigateur jusqu’à leur export.</p>
+        </div>
+      </div>
+      <div class="admin-tabs" id="adminTabs"></div>
+      <div id="validationReport"></div>
+      <div class="admin-layout">
+        <section class="panel" aria-label="Liste des données">
+          <div class="panel-head">
+            <h2 id="listTitle">Valeurs</h2>
+            <div class="head-actions">
+              <button class="button small hidden" id="validateButton" type="button">Valider</button>
+              <button class="button primary small" id="addButton" type="button">＋ Ajouter</button>
+            </div>
+          </div>
+          <div class="search-wrap">
+            <input class="search" id="searchInput" type="search" placeholder="Rechercher…" aria-label="Rechercher dans la liste">
+            <div class="figure-filters hidden" id="figureFilters">
+              <label class="filter-field" id="figureValueFilterField">Valeur
+                <select id="figureValueFilter" aria-label="Filtrer par valeur"><option value="">Toutes les valeurs</option></select>
+              </label>
+              <label class="check-label"><input id="unverifiedOnlyFilter" type="checkbox"> <span id="unverifiedOnlyLabel">Afficher uniquement les figures non vérifiées</span></label>
+            </div>
+          </div>
+          <div class="table-scroll"><table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div>
+        </section>
+        <section class="panel" aria-label="Édition">
+          <div class="editor" id="editor"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <div id="notice" class="notice hidden" role="status" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+    const VALUE_FIELDS = [
+      ["nom", "Nom", "text"], ["definition", "Définition", "textarea"],
+      ["apportsPossibles", "Apports possibles", "textarea"], ["zonesDeTension", "Zones de tension", "textarea"],
+      ["questions", "Questions", "textarea"], ["exempleDeFormulation", "Exemple de formulation", "textarea"],
+      ["miseEnGarde", "Mise en garde", "textarea"], ["noyau", "Noyau", "text"],
+      ["preserveEtRecherche", "Préserve et recherche", "text"], ["mouvement", "Mouvement", "text"],
+      ["ressourceCentrale", "Ressource centrale", "text"], ["rigidificationCentrale", "Rigidification centrale", "text"]
+    ];
+    const FIGURE_FIELDS = [["nom", "Nom", "text"], ["valeur", "Valeur associée", "select"], ["reference", "Référence", "text"], ["description", "Description", "textarea"]];
+    const PORTRAIT_TEXT_FIELDS = [["definition", "Définition"], ["vigilanceEtAjustement", "Vigilance et ajustement"], ["pointAttention", "Point d’attention"]];
+    const MODEL_FIELDS = {
+      valeurs: [...VALUE_FIELDS.map(([key]) => key), "verifie"],
+      figureHistoriques: [...FIGURE_FIELDS.map(([key]) => key), "verifie"],
+      figureLitteraires: [...FIGURE_FIELDS.map(([key]) => key), "verifie"],
+      figureImaginaires: [...FIGURE_FIELDS.map(([key]) => key), "verifie"],
+      portraits: ["valeurs", ...PORTRAIT_TEXT_FIELDS.map(([key]) => key), "verifie"]
+    };
+    const FIGURE_CATEGORIES = [
+      { key: "figureHistoriques", label: "Figures historiques" },
+      { key: "figureLitteraires", label: "Figures littéraires" },
+      { key: "figureImaginaires", label: "Figures imaginaires" }
+    ];
+    const TABS = [
+      { key: "valeurs", label: "Valeurs" },
+      ...FIGURE_CATEGORIES,
+      { key: "portraits", label: "Portraits" }
+    ];
+    const EMPTY_DATA = () => ({ valeurs: [], figureHistoriques: [], figureLitteraires: [], figureImaginaires: [], portraits: [] });
+    let data = EMPTY_DATA();
+    let modelLoaded = false;
+    let currentPage = "portrait";
+    let currentTab = "valeurs";
+    let selectedIndex = null;
+    let draft = null;
+    let isNew = false;
+    let selectedValues = [];
+    let noticeTimer;
+    let exportReminderTimer = null;
+    const EXPORT_REMINDER_DELAY = 2 * 60 * 1000;
+
+    const $ = (selector) => document.querySelector(selector);
+    const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+    const normalized = (value) => String(value ?? "").trim().toLocaleLowerCase("fr");
+    const currentRows = () => data[currentTab];
+    const currentLabel = () => TABS.find((tab) => tab.key === currentTab).label;
+    const figureCategory = () => FIGURE_CATEGORIES.find((category) => category.key === currentTab);
+    const newValue = () => Object.fromEntries([...VALUE_FIELDS.map(([key]) => [key, ""]), ["verifie", false]]);
+    const newFigure = () => ({ nom: "", valeur: data.valeurs[0]?.nom ?? "", description: "", reference: "", verifie: false });
+    const newPortrait = () => ({ valeurs: [], ...Object.fromEntries(PORTRAIT_TEXT_FIELDS.map(([key]) => [key, ""])), verifie: false });
+    const showNotice = (message, isError = false) => {
+      const notice = $("#notice");
+      notice.textContent = message;
+      notice.classList.toggle("error", isError);
+      notice.classList.remove("hidden");
+      clearTimeout(noticeTimer);
+      noticeTimer = setTimeout(() => notice.classList.add("hidden"), 3800);
+    };
+    const remindToExport = () => {
+      showNotice("Des modifications n'ont pas été exportées. Cliquez sur « Exporter données » pour les conserver.", true);
+      exportReminderTimer = setTimeout(remindToExport, EXPORT_REMINDER_DELAY);
+    };
+    const markUnexported = () => {
+      if (exportReminderTimer === null) exportReminderTimer = setTimeout(remindToExport, EXPORT_REMINDER_DELAY);
+    };
+    const resetExportReminder = () => {
+      clearTimeout(exportReminderTimer);
+      exportReminderTimer = null;
+    };
+    const clearValidationReport = () => { $("#validationReport").innerHTML = ""; };
+    const setPage = (page) => {
+      currentPage = page;
+      document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.page === page));
+      $("#portraitPage").classList.toggle("hidden", page !== "portrait");
+      $("#adminPage").classList.toggle("hidden", page !== "admin");
+      if (page === "admin") renderAdmin();
+    };
+
+    function renderPortrait() {
+      const host = $("#valueCards");
+      if (!data.valeurs.length) {
+        host.innerHTML = '<div class="empty-state">Aucune valeur n’est chargée pour le moment.<br>Utilisez <strong>Charger données</strong> ou ouvrez l’Administration pour commencer.</div>';
+        $("#selectionCount").textContent = "0 sur 3 valeurs choisies";
+        $("#portraitResults").innerHTML = "";
+        return;
+      }
+      selectedValues = selectedValues.filter((name) => data.valeurs.some((value) => value.nom === name)).slice(0, 3);
+      $("#selectionCount").textContent = `${selectedValues.length} sur 3 valeurs choisies`;
+      if (selectedValues.length === 3) {
+        host.innerHTML = `<div class="selected-values">${selectedValues.map((name, order) => {
+          const value = data.valeurs.find((item) => item.nom === name);
+          return `<button type="button" class="value-card selected chosen-value" data-value="${escapeHtml(name)}" aria-pressed="true" title="Cliquer pour retirer cette valeur"><span class="order-badge">${order + 1}</span><span class="name">${escapeHtml(name)}</span><span class="result-description">${escapeHtml(value?.definition || "")}</span></button>`;
+        }).join("")}</div><p class="field-hint">Cliquez sur une valeur pour la retirer et revenir à la liste complète.</p>`;
+        $("#portraitResults").innerHTML = renderResults();
+        return;
+      }
+      host.innerHTML = `<div class="values-grid">${data.valeurs.map((value) => {
+        const order = selectedValues.indexOf(value.nom);
+        return `<button type="button" class="value-card ${order >= 0 ? "selected" : ""}" data-value="${escapeHtml(value.nom)}" aria-pressed="${order >= 0}">${order >= 0 ? `<span class="order-badge">${order + 1}</span>` : ""}<span class="name">${escapeHtml(value.nom)}</span></button>`;
+      }).join("")}</div>`;
+      $("#portraitResults").innerHTML = "";
+    }
+
+    function findPortrait(values) {
+      const key = values.map(normalized).sort().join("\u0000");
+      return data.portraits.find((portrait) => Array.isArray(portrait.valeurs) && portrait.valeurs.map(normalized).sort().join("\u0000") === key);
+    }
+
+    function pickFigure(categoryKey, valueName) {
+      const matches = data[categoryKey].filter((figure) => normalized(figure.valeur) === normalized(valueName));
+      return matches.length ? matches[Math.floor(Math.random() * matches.length)] : null;
+    }
+
+    function renderResults() {
+      const [first, second, third] = selectedValues;
+      const portrait = findPortrait(selectedValues);
+      const figureCards = [
+        ["Figure historique · valeur 1", pickFigure("figureHistoriques", first)],
+        ["Figure littéraire · valeur 2", pickFigure("figureLitteraires", second)],
+        ["Figure imaginaire · valeur 3", pickFigure("figureImaginaires", third)]
+      ].map(([label, figure]) => `<article class="result-card"><p class="result-kicker">${label}</p>${figure
+        ? `<h2>${escapeHtml(figure.nom)}</h2><p class="result-description">${escapeHtml(figure.description)}</p><p class="reference">${escapeHtml(figure.reference || "")} · ${escapeHtml(figure.valeur || "")}</p>`
+        : `<h2>Aucune figure disponible</h2><p class="result-description">Aucune figure n’est associée à cette valeur dans cette catégorie.</p>`
+      }</article>`).join("");
+      return `<article class="result-card portrait-card"><p class="result-kicker">Votre combinaison</p><h2>${selectedValues.map(escapeHtml).join(" · ")}</h2><p class="result-description">${portrait ? escapeHtml(portrait.definition) : "Aucun portrait n’est encore défini pour cette combinaison."}</p></article><div class="results">${figureCards}</div>`;
+    }
+
+    function renderAdminTabs() {
+      $("#adminTabs").innerHTML = TABS.map((tab) => `<button type="button" class="admin-tab ${tab.key === currentTab ? "active" : ""}" data-admin-tab="${tab.key}">${tab.label}</button>`).join("");
+    }
+
+    function filteredRows() {
+      const query = normalized($("#searchInput").value);
+      const valueFilter = normalized($("#figureValueFilter").value);
+      const onlyUnverified = $("#unverifiedOnlyFilter").checked;
+      const rows = currentRows();
+      return rows.map((row, index) => ({ row, index })).filter(({ row }) => {
+        const nameMatches = !query || normalized(currentTab === "portraits" ? (row.valeurs || []).join(" ") : row.nom).includes(query);
+        if (figureCategory()) {
+          const valueMatches = !valueFilter || normalized(row.valeur) === valueFilter;
+          return nameMatches && valueMatches && (!onlyUnverified || !row.verifie);
+        }
+        if (currentTab === "portraits") {
+          const valueMatches = !valueFilter || (row.valeurs || []).some((value) => normalized(value) === valueFilter);
+          return valueMatches && (!onlyUnverified || !row.verifie);
+        }
+        return nameMatches && (!onlyUnverified || !row.verifie);
+      });
+    }
+
+    function renderList() {
+      $("#listTitle").textContent = currentLabel();
+      const isFigureCategory = Boolean(figureCategory());
+      const isPortraitTab = currentTab === "portraits";
+      const hasUnverifiedFilter = isFigureCategory || currentTab === "valeurs" || isPortraitTab;
+      const hasValueFilter = isFigureCategory || isPortraitTab;
+      $("#searchInput").classList.toggle("hidden", isPortraitTab);
+      $("#figureFilters").classList.toggle("hidden", !hasUnverifiedFilter);
+      $("#figureValueFilterField").classList.toggle("hidden", !hasValueFilter);
+      $("#unverifiedOnlyLabel").textContent = isFigureCategory ? "Afficher uniquement les figures non vérifiées"
+        : isPortraitTab ? "Afficher uniquement les portraits non vérifiés" : "Afficher uniquement les valeurs non vérifiées";
+      $("#searchInput").placeholder = isFigureCategory ? "Rechercher par nom de figure…" : "Rechercher…";
+      $("#searchInput").setAttribute("aria-label", isFigureCategory ? "Rechercher par nom de figure" : "Rechercher dans la liste");
+      const valueFilter = $("#figureValueFilter").value;
+      $("#figureValueFilter").innerHTML = `<option value="">Toutes les valeurs</option>${data.valeurs.map((value) => `<option value="${escapeHtml(value.nom)}">${escapeHtml(value.nom)}</option>`).join("")}`;
+      if (data.valeurs.some((value) => normalized(value.nom) === normalized(valueFilter))) $("#figureValueFilter").value = valueFilter;
+      $("#unverifiedOnlyFilter").checked = hasUnverifiedFilter && $("#unverifiedOnlyFilter").checked;
+      const isPortrait = currentTab === "portraits";
+      $("#tableHead").innerHTML = `<tr><th class="verified-col" aria-label="Vérifié"></th><th>${currentTab === "valeurs" ? "Valeur" : isPortrait ? "Valeurs du portrait" : "Figure"}</th>${isPortrait ? "" : `<th>${currentTab === "valeurs" ? "Définition" : "Valeur"}</th>`}</tr>`;
+      const rows = filteredRows();
+      $("#tableBody").innerHTML = rows.length ? rows.map(({ row, index }) => {
+        const primary = currentTab === "valeurs" ? row.nom : isPortrait ? (Array.isArray(row.valeurs) ? row.valeurs.join(" · ") : "") : row.nom;
+        const secondary = currentTab === "valeurs" ? row.definition : row.valeur;
+        const secondaryCell = isPortrait ? "" : `<td><span class="cell-sub">${escapeHtml(secondary || "—")}</span></td>`;
+        const verifiedCell = `<td class="verified-col">${row.verifie ? '<span role="img" aria-label="Vérifié" title="Vérifié">✅</span>' : ""}</td>`;
+        return `<tr data-row-index="${index}" class="${index === selectedIndex ? "active-row" : ""}">${verifiedCell}<td><span class="cell-title">${escapeHtml(primary || "Sans nom")}</span></td>${secondaryCell}</tr>`;
+      }).join("") : `<tr><td colspan="${isPortrait ? 2 : 3}" class="table-empty">${currentRows().length ? "Aucun résultat." : "Aucune donnée dans cette section."}</td></tr>`;
+      $("#addButton").textContent = "＋ Ajouter";
+      $("#validateButton").classList.remove("hidden");
+      $("#validateButton").textContent = currentTab === "portraits" ? "Valider les portraits" : currentTab === "valeurs" ? "Valider les valeurs" : "Valider la catégorie";
+    }
+
+    function fieldMarkup([key, label, type], value, disabled) {
+      const id = `field-${key}`;
+      const safeValue = escapeHtml(value);
+      const required = currentTab === "valeurs" || Boolean(figureCategory());
+      const labelText = `${label}${required ? " *" : ""}`;
+      if (type === "textarea") return `<div class="field ${["definition", "description", "apportsPossibles", "zonesDeTension", "questions", "exempleDeFormulation", "miseEnGarde"].includes(key) ? "full" : ""}"><label for="${id}">${labelText}</label><textarea id="${id}" data-field="${key}" ${required ? "required" : ""} ${disabled ? "disabled" : ""} class="${["definition", "description"].includes(key) ? "long" : ""}">${safeValue}</textarea></div>`;
+      if (type === "select") {
+        const options = data.valeurs.map((item) => `<option value="${escapeHtml(item.nom)}" ${item.nom === value ? "selected" : ""}>${escapeHtml(item.nom)}</option>`).join("");
+        return `<div class="field"><label for="${id}">${labelText}</label><select id="${id}" data-field="${key}" ${required ? "required" : ""} ${disabled ? "disabled" : ""}><option value="">Choisir une valeur…</option>${options}</select></div>`;
+      }
+      return `<div class="field"><label for="${id}">${labelText}</label><input id="${id}" data-field="${key}" type="text" value="${safeValue}" ${required ? "required" : ""} ${disabled ? "disabled" : ""}></div>`;
+    }
+
+    function renderEditor() {
+      const editor = $("#editor");
+      if (!draft) {
+        editor.innerHTML = '<div class="empty-state">Sélectionnez une ligne pour la modifier, ou ajoutez un nouvel élément.</div>';
+        return;
+      }
+      const locked = Boolean(draft.verifie);
+      const title = isNew ? `Nouvelle entrée · ${currentLabel().toLocaleLowerCase("fr")}` : `Modifier ${currentLabel().toLocaleLowerCase("fr")}`;
+      let fields;
+      if (currentTab === "valeurs") fields = VALUE_FIELDS.map((field) => fieldMarkup(field, draft[field[0]], locked)).join("");
+      else if (figureCategory()) {
+        fields = FIGURE_FIELDS.map((field) => fieldMarkup(field, draft[field[0]], locked || (field[0] === "valeur" && !data.valeurs.length))).join("");
+      } else {
+        const options = data.valeurs.map((item) => `<option value="${escapeHtml(item.nom)}" ${draft.valeurs.includes(item.nom) ? "selected" : ""}>${escapeHtml(item.nom)}</option>`).join("");
+        fields = `<div class="field full"><label for="field-valeurs">Valeurs (3 distinctes) *</label><select id="field-valeurs" data-field="valeurs" multiple required ${locked ? "disabled" : ""}>${options}</select><p class="field-hint">Maintenez Ctrl (Windows/Linux) ou ⌘ (Mac) pour sélectionner plusieurs valeurs.</p></div>${PORTRAIT_TEXT_FIELDS.map(([key, label]) => `<div class="field full"><label for="field-${key}">${label} *</label><textarea id="field-${key}" data-field="${key}" class="long" required ${locked ? "disabled" : ""}>${escapeHtml(draft[key])}</textarea></div>`).join("")}`;
+      }
+      const canVerify = !isNew;
+      editor.innerHTML = `<div class="editor-title"><div><h2>${title}</h2><p>${locked ? "Cet élément est vérifié. Décochez la case pour autoriser les modifications." : "Les modifications sont appliquées après enregistrement."}</p></div></div><div class="fields">${fields}</div><div class="editor-footer"><div class="editor-actions"><button type="button" class="button primary" id="saveButton" ${locked ? "disabled" : ""}>Enregistrer</button><button type="button" class="button danger" id="deleteButton" ${locked || isNew ? "disabled" : ""}>Supprimer</button></div><label class="check-label"><input type="checkbox" id="verifiedCheckbox" ${draft.verifie ? "checked" : ""} ${!canVerify ? "disabled" : ""}> Vérifié</label></div>`;
+      editor.querySelectorAll("[data-field]").forEach((control) => {
+        if (control.dataset.field === "valeurs" && control.multiple) {
+          control.addEventListener("change", () => { draft.valeurs = Array.from(control.selectedOptions, (option) => option.value); updateVerifyState(); });
+        } else {
+          control.addEventListener("input", () => { draft[control.dataset.field] = control.value; updateVerifyState(); });
+          control.addEventListener("change", () => { draft[control.dataset.field] = control.value; updateVerifyState(); });
+        }
+      });
+      updateVerifyState();
+    }
+
+    function hasUnsavedChanges() {
+      if (!draft || isNew) return false;
+      return JSON.stringify(draft) !== JSON.stringify(currentRows()[selectedIndex]);
+    }
+
+    function updateVerifyState() {
+      const checkbox = $("#verifiedCheckbox");
+      if (!checkbox || isNew) return;
+      const dirty = hasUnsavedChanges();
+      checkbox.disabled = dirty;
+      checkbox.closest("label").title = dirty ? "Enregistrez vos modifications avant de marquer l'élément comme vérifié." : "";
+    }
+
+    function renderAdmin() {
+      renderAdminTabs();
+      renderList();
+      renderEditor();
+    }
+
+    function setCurrentTab(tab) {
+      currentTab = tab;
+      selectedIndex = null;
+      draft = null;
+      isNew = false;
+      $("#searchInput").value = "";
+      $("#figureValueFilter").value = "";
+      $("#unverifiedOnlyFilter").checked = false;
+      clearValidationReport();
+      renderAdmin();
+    }
+
+    function validateDraft() {
+      return itemIssues(data, currentTab, draft, isNew ? -1 : selectedIndex)[0] || "";
+    }
+
+    function itemIssues(model, category, item, index) {
+      const rows = model[category];
+      if (category === "valeurs") {
+        const name = String(item.nom).trim();
+        return [
+          ...(!name ? ["Le nom de la valeur est obligatoire."] : []),
+          ...VALUE_FIELDS.filter(([field]) => field !== "nom" && !String(item[field]).trim())
+            .map(([, label]) => `Le champ « ${label} » de la valeur est obligatoire.`),
+          ...(rows.some((other, i) => i !== index && normalized(other.nom) === normalized(name))
+            ? [`Une valeur nommée « ${name} » existe déjà.`] : [])
+        ];
+      }
+      if (category !== "portraits") {
+        const name = String(item.nom).trim();
+        const value = String(item.valeur).trim();
+        const reference = String(item.reference).trim();
+        return [
+          ...(!name ? ["Le nom de la figure est obligatoire."] : []),
+          ...(!reference ? ["La référence de la figure est obligatoire."] : []),
+          ...(!String(item.description).trim() ? ["La description de la figure est obligatoire."] : []),
+          ...(!model.valeurs.some((entry) => normalized(entry.nom) === normalized(value))
+            ? ["La valeur associée doit exister dans l’onglet Valeurs."] : []),
+          ...(rows.some((other, i) => i !== index && normalized(other.nom) === normalized(name) && normalized(other.valeur) === normalized(value))
+            ? [`La figure « ${name} » existe déjà pour la valeur « ${value} » dans cette catégorie.`] : [])
+        ];
+      }
+      const values = item.valeurs;
+      const key = values.map(normalized).sort().join("\u0000");
+      const missing = values.filter((value) => !model.valeurs.some((entry) => normalized(entry.nom) === normalized(value)));
+      return [
+        ...(values.length !== 3 || new Set(values.map(normalized)).size !== 3
+          ? ["Un portrait doit contenir exactement trois valeurs distinctes."] : []),
+        ...PORTRAIT_TEXT_FIELDS.filter(([field]) => !String(item[field]).trim())
+          .map(([, label]) => `Le champ « ${label} » du portrait est obligatoire.`),
+        ...(missing.length ? [`Valeur(s) inconnue(s) : ${missing.join(", ")}.`] : []),
+        ...(rows.some((other, i) => i !== index && other.valeurs.map(normalized).sort().join("\u0000") === key)
+          ? ["Un portrait avec ces trois valeurs existe déjà, quel que soit leur ordre."] : [])
+      ];
+    }
+
+    function figureReferenceIssue(figures, figure, index) {
+      const name = String(figure.nom).trim();
+      const reference = String(figure.reference).trim();
+      if (!name || !reference) return "";
+      const conflictingFigure = figures.find((other, i) =>
+        i !== index && normalized(other.nom) === normalized(name) &&
+        String(other.reference).trim() && String(other.reference).trim() !== reference);
+      return conflictingFigure
+        ? `La référence doit être identique pour « ${name} » dans cette catégorie (autre référence : « ${conflictingFigure.reference.trim()} »).`
+        : "";
+    }
+
+    function itemLabel(category, item, index) {
+      if (category === "portraits") return item.valeurs.join(" · ").trim() || `entrée ${index + 1}`;
+      const name = item.nom.trim();
+      if (!name) return `entrée ${index + 1}`;
+      if (category === "valeurs") return name;
+      const value = item.valeur.trim();
+      return value ? `${name} · ${value}` : name;
+    }
+
+    function modelIssues(model) {
+      const issues = [];
+      for (const category of Object.keys(MODEL_FIELDS)) {
+        model[category].forEach((item, index) => {
+          for (const issue of itemIssues(model, category, item, index)) {
+            issues.push(`${category}, ${itemLabel(category, item, index)} : ${issue}`);
+          }
+          if (category !== "valeurs" && category !== "portraits") {
+            const issue = figureReferenceIssue(model[category], item, index);
+            if (issue) issues.push(`${category}, ${itemLabel(category, item, index)} : ${issue}`);
+          }
+        });
+      }
+      return issues;
+    }
+
+    function saveDraft() {
+      const error = validateDraft();
+      if (error) { showNotice(error, true); return; }
+      const saved = structuredClone(draft);
+      if (currentTab === "valeurs") saved.nom = saved.nom.trim();
+      const changed = isNew || JSON.stringify(currentRows()[selectedIndex]) !== JSON.stringify(saved);
+      if (currentTab === "valeurs") {
+        if (!isNew) {
+          const oldName = data.valeurs[selectedIndex].nom;
+          if (oldName !== saved.nom) {
+            data.valeurs[selectedIndex] = saved;
+            for (const category of FIGURE_CATEGORIES) for (const figure of data[category.key]) if (figure.valeur === oldName) figure.valeur = saved.nom;
+            for (const portrait of data.portraits) if (Array.isArray(portrait.valeurs)) portrait.valeurs = portrait.valeurs.map((value) => value === oldName ? saved.nom : value);
+          } else data.valeurs[selectedIndex] = saved;
+        } else { data.valeurs.push(saved); selectedIndex = data.valeurs.length - 1; }
+      } else if (isNew) {
+        currentRows().push(saved);
+        selectedIndex = currentRows().length - 1;
+      } else currentRows()[selectedIndex] = saved;
+      if (changed) markUnexported();
+      clearValidationReport();
+      draft = structuredClone(currentRows()[selectedIndex]);
+      isNew = false;
+      renderAdmin();
+      renderPortrait();
+      showNotice("Modifications enregistrées.");
+    }
+
+    function deleteSelected() {
+      const item = currentRows()[selectedIndex];
+      if (currentTab === "valeurs") {
+        const usedBy = [];
+        for (const category of FIGURE_CATEGORIES) if (data[category.key].some((figure) => normalized(figure.valeur) === normalized(item.nom))) usedBy.push("des figures");
+        if (data.portraits.some((portrait) => Array.isArray(portrait.valeurs) && portrait.valeurs.some((value) => normalized(value) === normalized(item.nom)))) usedBy.push("un portrait");
+        if (usedBy.length) { showNotice(`Suppression impossible : cette valeur est référencée par ${[...new Set(usedBy)].join(" et ")}.`, true); return; }
+      }
+      if (!window.confirm(`Supprimer « ${currentTab === "portraits" ? item.valeurs.join(" · ") : item.nom} » ?`)) return;
+      currentRows().splice(selectedIndex, 1);
+      markUnexported();
+      clearValidationReport();
+      selectedIndex = null;
+      draft = null;
+      renderAdmin();
+      renderPortrait();
+      showNotice("Élément supprimé.");
+    }
+
+    function renderValidation(title, issues) {
+      $("#validationReport").innerHTML = `<section class="report ${issues.length ? "warning" : "success"}"><strong>${escapeHtml(title)}</strong>${issues.length ? `<ul>${issues.map((issue) => `<li>${escapeHtml(issue)}</li>`).join("")}</ul>` : "<p class=\"field-hint\">Aucune anomalie détectée.</p>"}</section>`;
+    }
+
+    function validateValues() {
+      const issues = data.valeurs.flatMap((value, index) =>
+        itemIssues(data, "valeurs", value, index).map((issue) => `${itemLabel("valeurs", value, index)} : ${issue}`));
+      renderValidation("Validation · Valeurs", issues);
+    }
+
+    function validateFigures(categoryKey) {
+      const category = FIGURE_CATEGORIES.find((item) => item.key === categoryKey);
+      const figures = data[categoryKey];
+      const issues = figures.flatMap((figure, index) =>
+        itemIssues(data, categoryKey, figure, index).map((issue) => `${itemLabel(categoryKey, figure, index)} : ${issue}`));
+      figures.forEach((figure, index) => {
+        const issue = figureReferenceIssue(figures, figure, index);
+        if (issue) issues.push(`${itemLabel(categoryKey, figure, index)} : ${issue}`);
+      });
+      const counts = new Map();
+      figures.forEach((figure) => {
+        const value = normalized(figure.valeur);
+        if (value) counts.set(value, (counts.get(value) || 0) + 1);
+      });
+      for (const value of data.valeurs) {
+        const count = counts.get(normalized(value.nom)) || 0;
+        if (count === 0) issues.push(`${value.nom} : aucune figure dans cette catégorie.`);
+        else if (count < 7) issues.push(`${value.nom} : seulement ${count} figure(s) dans cette catégorie (minimum attendu : 7).`);
+      }
+      renderValidation(`Validation · ${category.label}`, issues);
+    }
+
+    function missingPortraitCombinations(model, limit = 5) {
+      const names = [];
+      const seen = new Set();
+      for (const value of model.valeurs) {
+        const name = String(value.nom).trim();
+        if (name && !seen.has(normalized(name))) { seen.add(normalized(name)); names.push(name); }
+      }
+      const existing = new Set(model.portraits
+        .filter((portrait) => Array.isArray(portrait.valeurs))
+        .map((portrait) => portrait.valeurs.map(normalized).sort().join("\u0000")));
+      const examples = [];
+      let missing = 0;
+      let total = 0;
+      for (let a = 0; a < names.length; a++) for (let b = a + 1; b < names.length; b++) for (let c = b + 1; c < names.length; c++) {
+        total++;
+        const combination = [names[a], names[b], names[c]];
+        if (existing.has(combination.map(normalized).sort().join("\u0000"))) continue;
+        missing++;
+        if (examples.length < limit) examples.push(combination.join(" · "));
+      }
+      return { missing, total, examples };
+    }
+
+    function missingCombinationsIssue(model) {
+      const { missing, total, examples } = missingPortraitCombinations(model);
+      if (!missing) return null;
+      const more = missing > examples.length ? ` ; … et ${missing - examples.length} autre(s)` : "";
+      return `${missing} combinaison(s) de 3 valeurs sans portrait sur ${total} possibles : ${examples.join(" ; ")}${more}.`;
+    }
+
+    function validatePortraits() {
+      const issues = data.portraits.flatMap((portrait, index) =>
+        itemIssues(data, "portraits", portrait, index).map((issue) => `${itemLabel("portraits", portrait, index)} : ${issue}`));
+      const usedValues = new Set(data.portraits.flatMap((portrait) => Array.isArray(portrait.valeurs) ? portrait.valeurs.map(normalized) : []));
+      for (const value of data.valeurs) if (!usedValues.has(normalized(value.nom))) issues.push(`${value.nom} : aucune combinaison de portrait ne contient cette valeur.`);
+      const combinationsIssue = missingCombinationsIssue(data);
+      if (combinationsIssue) issues.push(combinationsIssue);
+      renderValidation("Validation · Portraits", issues);
+    }
+
+    function yamlUnquote(value) {
+      const text = value.trim();
+      if (text.startsWith('"')) {
+        try { return JSON.parse(text); } catch { throw new Error(`Chaîne YAML entre guillemets invalide : ${text.slice(0, 40)}`); }
+      }
+      if (text.startsWith("'")) {
+        if (!text.endsWith("'")) throw new Error("Chaîne YAML entre apostrophes non terminée.");
+        return text.slice(1, -1).replace(/''/g, "'");
+      }
+      if (!text || /^(?:[\[\]{}!&*|>]|---|\.\.\.)/.test(text) || /(?:^|\s)#/.test(text) || /:\s/.test(text)) {
+        throw new Error(`Valeur YAML non prise en charge : « ${text.slice(0, 40)} ».`);
+      }
+      if (text === "true") return true;
+      if (text === "false") return false;
+      if (text === "null" || text === "~") return null;
+      if (/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(text)) return Number(text);
+      return text;
+    }
+
+    function isQuotedComplete(value) {
+      const text = value.trim();
+      const quote = text[0];
+      if (quote !== "'" && quote !== '"') return true;
+      for (let index = 1; index < text.length; index++) {
+        if (quote === "'" && text[index] === "'" && text[index + 1] === "'") { index++; continue; }
+        if (quote === '"' && text[index] === "\\") { index++; continue; }
+        if (text[index] === quote) return index === text.length - 1;
+      }
+      return false;
+    }
+
+    function parseYaml(source) {
+      const lines = source.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").split("\n");
+      const result = {};
+      let i = 0;
+      const skipEmpty = () => {
+        while (i < lines.length && (!lines[i].trim() || /^\s*#/.test(lines[i]))) i++;
+      };
+      const readScalar = (first) => {
+        let raw = first;
+        if (/^[|>]-?$/.test(raw)) {
+          const style = raw;
+          const block = [];
+          while (i < lines.length && (!lines[i].trim() || /^ {6,}/.test(lines[i]))) block.push(lines[i++]);
+          while (block.length && !block[block.length - 1].trim()) block.pop();
+          const nonblank = block.filter((line) => line.trim());
+          const indent = nonblank.length ? Math.min(...nonblank.map((line) => line.match(/^ */)[0].length)) : 6;
+          const content = block.map((line) => line.trim() ? line.slice(indent) : "").join("\n");
+          return (style.startsWith(">") ? content.replace(/\n(?!\n)/g, " ") : content) +
+            (content && !style.endsWith("-") ? "\n" : "");
+        }
+        if (raw.startsWith('"') || raw.startsWith("'")) {
+          while (!isQuotedComplete(raw) && i < lines.length && /^ {4,}\S/.test(lines[i])) {
+            raw += ` ${lines[i++].trim()}`;
+          }
+          if (!isQuotedComplete(raw)) throw new Error(`Chaîne YAML non terminée ligne ${i + 1}.`);
+        } else {
+          while (i < lines.length && /^ {6,}\S/.test(lines[i]) && !/^ {6,}-\s/.test(lines[i])) {
+            raw += ` ${lines[i++].trim()}`;
+          }
+        }
+        return yamlUnquote(raw);
+      };
+      const readProperty = (row, key, raw, category, line) => {
+        if (!MODEL_FIELDS[category].includes(key)) throw new Error(`Propriété « ${key} » inconnue dans « ${category} » ligne ${line}.`);
+        if (Object.hasOwn(row, key)) throw new Error(`Propriété « ${key} » répétée ligne ${line}.`);
+        if (category === "portraits" && key === "valeurs") {
+          if (raw === "[]") { row.valeurs = []; return; }
+          if (raw !== "") throw new Error(`« valeurs » doit être une liste ligne ${line}.`);
+          const values = [];
+          while (true) {
+            skipEmpty();
+            if (!/^ {6}-\s+/.test(lines[i] || "")) break;
+            values.push(yamlUnquote(lines[i++].slice(8)));
+          }
+          if (!values.length) throw new Error(`« valeurs » doit être une liste (utiliser [] si elle est vide), ligne ${line}.`);
+          row.valeurs = values;
+          return;
+        }
+        if (raw === "") throw new Error(`Valeur manquante pour « ${key} » ligne ${line} (utiliser "" pour une chaîne vide).`);
+        row[key] = readScalar(raw);
+      };
+      while (i < lines.length) {
+        skipEmpty();
+        if (i >= lines.length) break;
+        const header = lines[i++].match(/^([A-Za-z][A-Za-z0-9]*):(?: (.*))?$/);
+        if (!header || !Object.hasOwn(MODEL_FIELDS, header[1])) throw new Error(`Section YAML invalide ligne ${i}.`);
+        const category = header[1];
+        if (Object.hasOwn(result, category)) throw new Error(`Section « ${category} » répétée ligne ${i}.`);
+        if (header[2] === "[]") { result[category] = []; continue; }
+        if (header[2]) throw new Error(`« ${category} » doit être une liste ligne ${i}.`);
+        const rows = [];
+        while (true) {
+          skipEmpty();
+          if (i >= lines.length || /^[^ ]/.test(lines[i])) break;
+          const first = lines[i++].match(/^ {2}- (.+)$/);
+          if (!first) throw new Error(`Entrée YAML invalide ligne ${i} dans « ${category} ».`);
+          const row = {};
+          const firstField = first[1].match(/^([A-Za-z][A-Za-z0-9]*):(?: (.*))?$/);
+          if (!firstField) throw new Error(`Propriété YAML invalide ligne ${i}.`);
+          readProperty(row, firstField[1], firstField[2] ?? "", category, i);
+          while (true) {
+            skipEmpty();
+            if (i >= lines.length || !/^ {4}[^ ]/.test(lines[i])) break;
+            const property = lines[i++].match(/^ {4}([A-Za-z][A-Za-z0-9]*):(?: (.*))?$/);
+            if (!property) throw new Error(`Propriété YAML invalide ligne ${i}.`);
+            readProperty(row, property[1], property[2] ?? "", category, i);
+          }
+          rows.push(row);
+        }
+        if (!rows.length) throw new Error(`« ${category} » doit contenir une liste (utiliser [] si elle est vide).`);
+        result[category] = rows;
+      }
+      return result;
+    }
+
+    const yamlQuote = (value) => JSON.stringify(String(value ?? ""));
+    function serializeYaml(model) {
+      const output = [];
+      for (const key of Object.keys(EMPTY_DATA())) {
+        output.push(`${key}:`);
+        for (const row of model[key] || []) {
+          const fields = key === "valeurs" ? VALUE_FIELDS.map(([name]) => name).concat("verifie")
+            : FIGURE_CATEGORIES.some((category) => category.key === key) ? ["nom", "valeur", "description", "reference", "verifie"]
+            : MODEL_FIELDS.portraits;
+          const first = fields[0];
+          if (first === "valeurs") {
+            output.push(row.valeurs.length ? "  - valeurs:" : "  - valeurs: []");
+            for (const value of row.valeurs) output.push(`      - ${yamlQuote(value)}`);
+          } else output.push(`  - ${first}: ${serializeScalar(row[first])}`);
+          for (const field of fields.slice(1)) {
+            const value = row[field];
+            output.push(`    ${field}: ${serializeScalar(value)}`);
+          }
+        }
+        if (!model[key]?.length) output[output.length - 1] += " []";
+        output.push("");
+      }
+      return output.join("\n").trimEnd() + "\n";
+    }
+
+    function serializeScalar(value) {
+      if (typeof value === "boolean") return value ? "true" : "false";
+      if (typeof value === "number" && Number.isFinite(value)) return String(value);
+      const text = String(value ?? "");
+      if (text.endsWith("\n") || (text.includes("\n") && !text.split("\n").at(-1).trim())) return yamlQuote(text);
+      if (text.includes("\n") && text.split("\n").filter(Boolean).every((line) => /^[ \t]/.test(line))) return yamlQuote(text);
+      if (text.includes("\n")) return `|-\n${text.split("\n").map((line) => `      ${line}`).join("\n")}`;
+      return yamlQuote(text);
+    }
+
+    function normalizeImported(model) {
+      const normalizedModel = EMPTY_DATA();
+      for (const key of Object.keys(normalizedModel)) {
+        if (!Array.isArray(model[key])) throw new Error(`La section « ${key} » est absente ou n'est pas une liste.`);
+        normalizedModel[key] = model[key].map((row, index) => {
+          if (!row || typeof row !== "object" || Array.isArray(row)) throw new Error(`Élément ${index + 1} invalide dans « ${key} ».`);
+          const expected = MODEL_FIELDS[key];
+          for (const field of Object.keys(row)) {
+            if (!expected.includes(field)) throw new Error(`Propriété « ${field} » inconnue dans « ${key} », entrée ${index + 1}.`);
+          }
+          for (const field of expected) {
+            if (!Object.hasOwn(row, field)) throw new Error(`Propriété « ${field} » manquante dans « ${key} », entrée ${index + 1}.`);
+            const value = row[field];
+            const valid = field === "verifie" ? typeof value === "boolean"
+              : key === "portraits" && field === "valeurs"
+                ? Array.isArray(value) && value.every((item) => typeof item === "string")
+                : typeof value === "string";
+            if (!valid) throw new Error(`Type invalide pour « ${field} » dans « ${key} », entrée ${index + 1}.`);
+          }
+          const multiline = key === "valeurs"
+            ? new Set(["definition", "apportsPossibles", "zonesDeTension", "questions", "exempleDeFormulation", "miseEnGarde"])
+            : key === "portraits" ? new Set(PORTRAIT_TEXT_FIELDS.map(([field]) => field))
+            : new Set(["description"]);
+          for (const field of expected) {
+            if (typeof row[field] === "string" && !multiline.has(field) && /[\r\n]/.test(row[field])) {
+              throw new Error(`« ${field} » doit rester sur une seule ligne dans « ${key} », entrée ${index + 1}.`);
+            }
+          }
+          return row;
+        });
+      }
+      for (const key of Object.keys(model)) {
+        if (!Object.hasOwn(normalizedModel, key)) throw new Error(`Section « ${key} » inconnue.`);
+      }
+      return normalizedModel;
+    }
+
+    $("#loadButton").addEventListener("click", () => $("#fileInput").click());
+    $("#fileInput").addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        if (modelLoaded && !window.confirm("Un modèle est déjà chargé. Charger ce fichier remplacera les données actuelles, y compris les modifications non exportées. Continuer ?")) return;
+        const parsed = normalizeImported(parseYaml(await file.text()));
+        data = parsed;
+        resetExportReminder();
+        modelLoaded = true;
+        selectedValues = [];
+        selectedIndex = null;
+        draft = null;
+        isNew = false;
+        clearValidationReport();
+        renderPortrait();
+        renderAdmin();
+        const issues = modelIssues(data);
+        const combinationsIssue = missingCombinationsIssue(data);
+        if (combinationsIssue) issues.push(`portraits : ${combinationsIssue}`);
+        if (issues.length) {
+          renderValidation(`Fichier chargé · ${issues.length} anomalie(s) à corriger`, issues);
+          setPage("admin");
+          showNotice(`${file.name} chargé avec ${issues.length} anomalie(s) : voir le rapport dans Administration.`, true);
+        } else {
+          showNotice(`${file.name} chargé : ${data.valeurs.length} valeurs, ${FIGURE_CATEGORIES.reduce((sum, category) => sum + data[category.key].length, 0)} figures et ${data.portraits.length} portraits.`);
+        }
+      } catch (error) {
+        showNotice(`Impossible de charger le fichier : ${error.message}`, true);
+      } finally {
+        event.target.value = "";
+      }
+    });
+
+    $("#exportButton").addEventListener("click", () => {
+      let issues;
+      try {
+        normalizeImported(data);
+        issues = modelIssues(data);
+      } catch (error) {
+        showNotice(`Export impossible : ${error.message}`, true);
+        return;
+      }
+      const blob = new Blob([serializeYaml(data)], { type: "text/yaml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const now = new Date();
+      const pad = (number) => String(number).padStart(2, "0");
+      link.download = `portraits-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}.yaml`;
+      link.click();
+      resetExportReminder();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      if (issues.length) {
+        renderValidation(`Export · ${issues.length} anomalie(s) à corriger`, issues);
+        setPage("admin");
+        showNotice(`Fichier exporté avec ${issues.length} anomalie(s) métier : voir le rapport dans Administration.`, true);
+      } else showNotice("Le fichier YAML a été exporté.");
+    });
+
+    document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => setPage(tab.dataset.page)));
+    $("#valueCards").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-value]");
+      if (!button) return;
+      const value = button.dataset.value;
+      const index = selectedValues.indexOf(value);
+      if (index >= 0) selectedValues.splice(index, 1);
+      else if (selectedValues.length < 3) selectedValues.push(value);
+      else { showNotice("Vous pouvez choisir au maximum trois valeurs.", true); return; }
+      renderPortrait();
+    });
+
+    $("#adminTabs").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-admin-tab]");
+      if (button) setCurrentTab(button.dataset.adminTab);
+    });
+    $("#searchInput").addEventListener("input", renderList);
+    $("#figureValueFilter").addEventListener("change", renderList);
+    $("#unverifiedOnlyFilter").addEventListener("change", renderList);
+    $("#tableBody").addEventListener("click", (event) => {
+      const row = event.target.closest("[data-row-index]");
+      if (!row) return;
+      selectedIndex = Number(row.dataset.rowIndex);
+      draft = structuredClone(currentRows()[selectedIndex]);
+      isNew = false;
+      renderList();
+      renderEditor();
+    });
+    $("#validateButton").addEventListener("click", () => {
+      if (currentTab === "valeurs") validateValues();
+      else if (currentTab === "portraits") validatePortraits();
+      else if (figureCategory()) validateFigures(currentTab);
+    });
+    $("#addButton").addEventListener("click", () => {
+      selectedIndex = null;
+      isNew = true;
+      draft = currentTab === "valeurs" ? newValue() : figureCategory() ? newFigure() : newPortrait();
+      renderList();
+      renderEditor();
+    });
+    $("#editor").addEventListener("click", (event) => {
+      if (event.target.id === "saveButton") saveDraft();
+      if (event.target.id === "deleteButton") deleteSelected();
+    });
+    $("#editor").addEventListener("change", (event) => {
+      if (event.target.id !== "verifiedCheckbox" || !draft || isNew) return;
+      if (hasUnsavedChanges()) {
+        event.target.checked = !event.target.checked;
+        showNotice("Enregistrez vos modifications avant de marquer l'élément comme vérifié.", true);
+        return;
+      }
+      draft.verifie = event.target.checked;
+      currentRows()[selectedIndex].verifie = event.target.checked;
+      markUnexported();
+      clearValidationReport();
+      renderList();
+      renderEditor();
+      renderPortrait();
+      showNotice(event.target.checked ? "Élément marqué comme vérifié." : "Vérification retirée ; les modifications sont déverrouillées.");
+    });
+
+    renderPortrait();
+    renderAdmin();
+  </script>
+</body>
+</html>
