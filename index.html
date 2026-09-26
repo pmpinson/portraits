@@ -178,6 +178,7 @@
       <input id="fileInput" type="file" accept=".yaml,.yml,text/yaml,text/plain">
       <button class="button primary" id="exportButton" type="button">Exporter données</button>
       <button class="button" id="driveLoadButton" type="button" disabled>Charger depuis Drive</button>
+      <button class="button" id="driveExportButton" type="button" disabled>Exporter vers Drive</button>
     </div>
   </header>
   <nav class="tabs" aria-label="Sections principales">
@@ -1014,6 +1015,53 @@
       return response.text();
     }
 
+    // Choisir le dossier donne aussi à l'application (droit drive.file) l'accès nécessaire pour y créer le fichier.
+    // Le Picker ne permet pas de sélectionner le dossier ouvert : la vue affiche donc le dossier par défaut lui-même
+    // (setFileIds), prêt à être sélectionné.
+    function pickDriveFolder(token, folderId) {
+      return new Promise((resolve) => {
+        const instruction = folderId === DRIVE_DATA_FOLDER_ID
+          ? "Sélectionnez le dossier data"
+          : "Sélectionnez le dossier du fichier chargé";
+        const view = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
+          .setFileIds(folderId)
+          .setIncludeFolders(true)
+          .setSelectFolderEnabled(true)
+          .setMimeTypes("application/vnd.google-apps.folder")
+          .setMode(google.picker.DocsViewMode.LIST)
+          .setLabel(instruction);
+        new google.picker.PickerBuilder()
+          .setTitle(`${instruction} pour y enregistrer l'export`)
+          .setAppId(GOOGLE_APP_ID)
+          .setDeveloperKey(GOOGLE_API_KEY)
+          .setOAuthToken(token)
+          .setLocale("fr")
+          .addView(view)
+          .setCallback((result) => {
+            if (result.action === google.picker.Action.PICKED) resolve(result.docs[0][google.picker.Document.ID]);
+            else if (result.action === google.picker.Action.CANCEL) resolve(null);
+          })
+          .build()
+          .setVisible(true);
+      });
+    }
+
+    async function uploadDriveFile(name, folderId, content, token) {
+      const boundary = `portraits-${Date.now()}`;
+      const metadata = { name, parents: [folderId], mimeType: "application/x-yaml" };
+      const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`
+        + `--${boundary}\r\nContent-Type: application/x-yaml; charset=UTF-8\r\n\r\n${content}\r\n--${boundary}--`;
+      const response = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,name,parents", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+        body
+      });
+      if (response.status === 401) { driveAccessToken = null; throw new Error("Session Google expirée, veuillez réessayer."); }
+      if (response.status === 403 || response.status === 404) throw new Error(`accès refusé au dossier choisi (erreur ${response.status}).`);
+      if (!response.ok) throw new Error(`envoi impossible vers Drive (erreur ${response.status}).`);
+      return response.json();
+    }
+
     const driveUnavailableReason = () => location.protocol === "file:"
       ? "Google Drive n'est pas disponible en file:// : ouvrez l'application via http://localhost:63342 (serveur IntelliJ) ou un hébergement https."
       : "";
@@ -1021,6 +1069,8 @@
       const reason = driveUnavailableReason();
       $("#driveLoadButton").disabled = Boolean(reason);
       $("#driveLoadButton").title = reason || "Choisir un fichier YAML dans Google Drive (dossier Johanna/portraits/data).";
+      $("#driveExportButton").disabled = Boolean(reason);
+      $("#driveExportButton").title = reason || "Créer une nouvelle copie du fichier YAML dans Google Drive.";
       // Préchargement : la fenêtre de connexion Google doit s'ouvrir juste après le clic pour ne pas être bloquée.
       if (!reason) loadDriveLibraries().catch(() => {});
     }
@@ -1046,30 +1096,66 @@
       }
     });
 
-    $("#exportButton").addEventListener("click", () => {
-      let issues;
-      try {
-        normalizeImported(data);
-        issues = modelIssues(data);
-      } catch (error) {
-        showNotice(`Export impossible : ${error.message}`, true);
-        return;
-      }
-      const blob = new Blob([serializeYaml(data)], { type: "text/yaml;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
+    const exportFileName = () => {
       const now = new Date();
       const pad = (number) => String(number).padStart(2, "0");
-      link.download = `portraits-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}.yaml`;
-      link.click();
+      return `portraits-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}.yaml`;
+    };
+
+    // Refuse l'export si la structure ou les types sont invalides ; les anomalies métier sont signalées après l'export.
+    function prepareExport() {
+      try {
+        normalizeImported(data);
+        return { content: serializeYaml(data), issues: modelIssues(data) };
+      } catch (error) {
+        showNotice(`Export impossible : ${error.message}`, true);
+        return null;
+      }
+    }
+
+    function reportExport(issues, message) {
       resetExportReminder();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
       if (issues.length) {
         renderValidation(`Export · ${issues.length} anomalie(s) à corriger`, issues);
         setPage("admin");
-        showNotice(`Fichier exporté avec ${issues.length} anomalie(s) métier : voir le rapport dans Administration.`, true);
-      } else showNotice("Le fichier YAML a été exporté.");
+        showNotice(`${message} avec ${issues.length} anomalie(s) métier : voir le rapport dans Administration.`, true);
+      } else showNotice(`${message}.`);
+    }
+
+    $("#driveExportButton").addEventListener("click", async () => {
+      const button = $("#driveExportButton");
+      const prepared = prepareExport();
+      if (!prepared) return;
+      button.disabled = true;
+      try {
+        await loadDriveLibraries();
+        const token = await requestDriveToken();
+        const folderId = await pickDriveFolder(token, driveFile?.parentId || DRIVE_DATA_FOLDER_ID);
+        if (!folderId) return;
+        let name = window.prompt("Nom du fichier à créer dans Drive :", exportFileName())?.trim();
+        if (!name) return;
+        if (!/\.ya?ml$/i.test(name)) name += ".yaml";
+        const created = await uploadDriveFile(name, folderId, prepared.content, token);
+        driveFile = { id: created.id, name: created.name, parentId: created.parents?.[0] || folderId };
+        reportExport(prepared.issues, `${created.name} créé dans Drive`);
+      } catch (error) {
+        showNotice(`Export vers Drive impossible : ${error.message}`, true);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    $("#exportButton").addEventListener("click", () => {
+      const prepared = prepareExport();
+      if (!prepared) return;
+      const blob = new Blob([prepared.content], { type: "text/yaml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = exportFileName();
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      reportExport(prepared.issues, "Le fichier YAML a été exporté");
     });
 
     document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => setPage(tab.dataset.page)));
