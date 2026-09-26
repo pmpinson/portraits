@@ -177,6 +177,7 @@
       <button class="button" id="loadButton" type="button">Charger données</button>
       <input id="fileInput" type="file" accept=".yaml,.yml,text/yaml,text/plain">
       <button class="button primary" id="exportButton" type="button">Exporter données</button>
+      <button class="button" id="driveLoadButton" type="button" disabled>Charger depuis Drive</button>
     </div>
   </header>
   <nav class="tabs" aria-label="Sections principales">
@@ -878,37 +879,170 @@
       return normalizedModel;
     }
 
+    const confirmReplaceModel = () => !modelLoaded || window.confirm("Un modèle est déjà chargé. Charger ce fichier remplacera les données actuelles, y compris les modifications non exportées. Continuer ?");
+
+    function loadModelFromText(text, fileName) {
+      const parsed = normalizeImported(parseYaml(text));
+      data = parsed;
+      resetExportReminder();
+      modelLoaded = true;
+      selectedValues = [];
+      selectedIndex = null;
+      draft = null;
+      isNew = false;
+      clearValidationReport();
+      renderPortrait();
+      renderAdmin();
+      const issues = modelIssues(data);
+      const combinationsIssue = missingCombinationsIssue(data);
+      if (combinationsIssue) issues.push(`portraits : ${combinationsIssue}`);
+      if (issues.length) {
+        renderValidation(`Fichier chargé · ${issues.length} anomalie(s) à corriger`, issues);
+        setPage("admin");
+        showNotice(`${fileName} chargé avec ${issues.length} anomalie(s) : voir le rapport dans Administration.`, true);
+      } else {
+        showNotice(`${fileName} chargé : ${data.valeurs.length} valeurs, ${FIGURE_CATEGORIES.reduce((sum, category) => sum + data[category.key].length, 0)} figures et ${data.portraits.length} portraits.`);
+      }
+    }
+
     $("#loadButton").addEventListener("click", () => $("#fileInput").click());
     $("#fileInput").addEventListener("change", async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;
       try {
-        if (modelLoaded && !window.confirm("Un modèle est déjà chargé. Charger ce fichier remplacera les données actuelles, y compris les modifications non exportées. Continuer ?")) return;
-        const parsed = normalizeImported(parseYaml(await file.text()));
-        data = parsed;
-        resetExportReminder();
-        modelLoaded = true;
-        selectedValues = [];
-        selectedIndex = null;
-        draft = null;
-        isNew = false;
-        clearValidationReport();
-        renderPortrait();
-        renderAdmin();
-        const issues = modelIssues(data);
-        const combinationsIssue = missingCombinationsIssue(data);
-        if (combinationsIssue) issues.push(`portraits : ${combinationsIssue}`);
-        if (issues.length) {
-          renderValidation(`Fichier chargé · ${issues.length} anomalie(s) à corriger`, issues);
-          setPage("admin");
-          showNotice(`${file.name} chargé avec ${issues.length} anomalie(s) : voir le rapport dans Administration.`, true);
-        } else {
-          showNotice(`${file.name} chargé : ${data.valeurs.length} valeurs, ${FIGURE_CATEGORIES.reduce((sum, category) => sum + data[category.key].length, 0)} figures et ${data.portraits.length} portraits.`);
-        }
+        if (!confirmReplaceModel()) return;
+        loadModelFromText(await file.text(), file.name);
+        driveFile = null;
       } catch (error) {
         showNotice(`Impossible de charger le fichier : ${error.message}`, true);
       } finally {
         event.target.value = "";
+      }
+    });
+
+    // Identifiants publics du projet Google Cloud (aucun secret) : l'accès est limité par l'origine et le droit drive.file.
+    const GOOGLE_CLIENT_ID = "561950827150-vnlc41cllf31b3hhjuip8h6dngu6uir5.apps.googleusercontent.com";
+    const GOOGLE_API_KEY = "AIzaSyCzl0lN_pF_6oQz-xOds2m5G7xiCDIA89M";
+    const GOOGLE_APP_ID = "561950827150";
+    const DRIVE_DATA_FOLDER_ID = "1KU6zYszR1N83yLuMzVTVAkfSJicx-tKe";
+    const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+    // Drive n'a pas de type unique pour YAML : on accepte les variantes courantes (+ dossiers pour naviguer).
+    const DRIVE_YAML_MIME_TYPES = [
+      "application/x-yaml", "application/yaml", "text/yaml", "text/x-yaml",
+      "application/vnd.google-apps.folder"
+    ];
+    let driveFile = null;
+    let driveAccessToken = null;
+    let driveTokenExpiresAt = 0;
+    let driveTokenClient = null;
+
+    const loadScript = (src) => new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = src;
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error(`Impossible de charger ${src}.`));
+      document.head.appendChild(script);
+    });
+
+    let driveLibrariesPromise = null;
+    function loadDriveLibraries() {
+      driveLibrariesPromise ??= Promise.all([
+        loadScript("https://accounts.google.com/gsi/client"),
+        loadScript("https://apis.google.com/js/api.js").then(() => new Promise((resolve, reject) => {
+          gapi.load("picker", { callback: resolve, onerror: () => reject(new Error("Impossible de charger Google Picker.")) });
+        }))
+      ]).catch((error) => { driveLibrariesPromise = null; throw error; });
+      return driveLibrariesPromise;
+    }
+
+    let pendingDriveToken = null;
+    function requestDriveToken() {
+      if (driveAccessToken && Date.now() < driveTokenExpiresAt) return Promise.resolve(driveAccessToken);
+      return new Promise((resolve, reject) => {
+        pendingDriveToken = { resolve, reject };
+        driveTokenClient ??= google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: DRIVE_SCOPE,
+          callback: (response) => {
+            const pending = pendingDriveToken;
+            pendingDriveToken = null;
+            if (response.error) { pending?.reject(new Error(response.error_description || response.error)); return; }
+            driveAccessToken = response.access_token;
+            driveTokenExpiresAt = Date.now() + (Number(response.expires_in) - 60) * 1000;
+            pending?.resolve(driveAccessToken);
+          },
+          error_callback: (error) => {
+            const pending = pendingDriveToken;
+            pendingDriveToken = null;
+            pending?.reject(new Error(error?.type === "popup_closed" ? "Connexion Google annulée." : error?.message || "Connexion Google impossible."));
+          }
+        });
+        driveTokenClient.requestAccessToken({ prompt: driveAccessToken ? "" : "consent" });
+      });
+    }
+
+    function pickDriveFile(token) {
+      return new Promise((resolve) => {
+        const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
+          .setParent(DRIVE_DATA_FOLDER_ID)
+          .setIncludeFolders(true)
+          .setMimeTypes(DRIVE_YAML_MIME_TYPES.join(","))
+          .setMode(google.picker.DocsViewMode.LIST);
+        new google.picker.PickerBuilder()
+          .setTitle("Choisir un fichier de données YAML")
+          .setAppId(GOOGLE_APP_ID)
+          .setDeveloperKey(GOOGLE_API_KEY)
+          .setOAuthToken(token)
+          .setLocale("fr")
+          .addView(view)
+          .setCallback((result) => {
+            if (result.action === google.picker.Action.PICKED) resolve(result.docs[0]);
+            else if (result.action === google.picker.Action.CANCEL) resolve(null);
+          })
+          .build()
+          .setVisible(true);
+      });
+    }
+
+    async function downloadDriveFile(fileId, token) {
+      const response = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.status === 401) { driveAccessToken = null; throw new Error("Session Google expirée, veuillez réessayer."); }
+      if (!response.ok) throw new Error(`Téléchargement impossible depuis Drive (erreur ${response.status}).`);
+      return response.text();
+    }
+
+    const driveUnavailableReason = () => location.protocol === "file:"
+      ? "Google Drive n'est pas disponible en file:// : ouvrez l'application via http://localhost:63342 (serveur IntelliJ) ou un hébergement https."
+      : "";
+    {
+      const reason = driveUnavailableReason();
+      $("#driveLoadButton").disabled = Boolean(reason);
+      $("#driveLoadButton").title = reason || "Choisir un fichier YAML dans Google Drive (dossier Johanna/portraits/data).";
+      // Préchargement : la fenêtre de connexion Google doit s'ouvrir juste après le clic pour ne pas être bloquée.
+      if (!reason) loadDriveLibraries().catch(() => {});
+    }
+
+    $("#driveLoadButton").addEventListener("click", async () => {
+      const button = $("#driveLoadButton");
+      button.disabled = true;
+      try {
+        await loadDriveLibraries();
+        const token = await requestDriveToken();
+        const doc = await pickDriveFile(token);
+        if (!doc) return;
+        const name = doc[google.picker.Document.NAME];
+        if (!/\.ya?ml$/i.test(name)) { showNotice(`« ${name} » n'est pas un fichier YAML (.yaml ou .yml).`, true); return; }
+        if (!confirmReplaceModel()) return;
+        const text = await downloadDriveFile(doc[google.picker.Document.ID], token);
+        loadModelFromText(text, name);
+        driveFile = { id: doc[google.picker.Document.ID], name, parentId: doc[google.picker.Document.PARENT_ID] || DRIVE_DATA_FOLDER_ID };
+      } catch (error) {
+        showNotice(`Impossible de charger depuis Drive : ${error.message}`, true);
+      } finally {
+        button.disabled = false;
       }
     });
 
