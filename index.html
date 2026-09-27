@@ -251,13 +251,13 @@
     const MODEL_FIELDS = {
       valeurs: [...VALUE_FIELDS.map(([key]) => key), "verifie"],
       figureHistoriques: [...FIGURE_FIELDS.map(([key]) => key), "verifie"],
-      figureLitteraires: [...FIGURE_FIELDS.map(([key]) => key), "verifie"],
+      figureNarratives: [...FIGURE_FIELDS.map(([key]) => key), "verifie"],
       figureImaginaires: [...FIGURE_FIELDS.map(([key]) => key), "verifie"],
       portraits: ["valeurs", ...PORTRAIT_TEXT_FIELDS.map(([key]) => key), "verifie"]
     };
     const FIGURE_CATEGORIES = [
       { key: "figureHistoriques", label: "Figures historiques" },
-      { key: "figureLitteraires", label: "Figures littéraires" },
+      { key: "figureNarratives", label: "Figures narratives" },
       { key: "figureImaginaires", label: "Figures imaginaires" }
     ];
     const TABS = [
@@ -265,7 +265,7 @@
       ...FIGURE_CATEGORIES,
       { key: "portraits", label: "Portraits" }
     ];
-    const EMPTY_DATA = () => ({ valeurs: [], figureHistoriques: [], figureLitteraires: [], figureImaginaires: [], portraits: [] });
+    const EMPTY_DATA = () => ({ valeurs: [], figureHistoriques: [], figureNarratives: [], figureImaginaires: [], portraits: [] });
     let data = EMPTY_DATA();
     let modelLoaded = false;
     let currentPage = "portrait";
@@ -355,7 +355,7 @@
       const portrait = findPortrait(selectedValues);
       const figureCards = [
         ["Figure historique · valeur 1", pickFigure("figureHistoriques", first)],
-        ["Figure littéraire · valeur 2", pickFigure("figureLitteraires", second)],
+        ["Figure narrative · valeur 2", pickFigure("figureNarratives", second)],
         ["Figure imaginaire · valeur 3", pickFigure("figureImaginaires", third)]
       ].map(([label, figure]) => `<article class="result-card"><p class="result-kicker">${label}</p>${figure
         ? `<h2>${escapeHtml(figure.nom)}</h2><p class="result-description">${escapeHtml(figure.description)}</p><p class="reference">${escapeHtml(figure.reference || "")} · ${escapeHtml(figure.valeur || "")}</p>`
